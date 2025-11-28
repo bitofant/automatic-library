@@ -1,0 +1,94 @@
+import { ref, computed, watch, type Ref } from 'vue'
+import { useRouter } from 'vue-router'
+import type { LibraryData, Rating } from '../types'
+import { rateImage } from '../services/api'
+
+export function useSlideshow(libraryData: Ref<LibraryData | null>) {
+  const router = useRouter()
+  const currentIndex = ref(0)
+  const direction = ref<'next' | 'prev'>('next')
+  const isLoading = ref(false)
+
+  const currentImage = computed(() => {
+    if (!libraryData.value || currentIndex.value < 0) return null
+    return libraryData.value.files[currentIndex.value]
+  })
+
+  const currentImagePath = computed(() => {
+    if (!libraryData.value || !currentImage.value) return ''
+    return `/libs/${currentImage.value.library}/${currentImage.value.file}`
+  })
+
+  const infoText = computed(() => {
+    if (!libraryData.value || !currentImage.value) return ''
+    const rating = currentImage.value.rating
+    const ratingText = rating ? ` - ${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}` : ''
+    return `${libraryData.value.name} - ${currentIndex.value + 1} / ${libraryData.value.files.length} - ${currentImage.value.file}${ratingText}`
+  })
+
+  watch(libraryData, (newLib) => {
+    if (newLib) {
+      currentIndex.value = 0
+      direction.value = 'next'
+    }
+  })
+
+  function next() {
+    if (!libraryData.value) return
+    direction.value = 'next'
+    currentIndex.value++
+    if (currentIndex.value >= libraryData.value.files.length) {
+      currentIndex.value = 0
+    }
+  }
+
+  function previous() {
+    if (!libraryData.value) return
+    direction.value = 'prev'
+    currentIndex.value--
+    if (currentIndex.value < 0) {
+      currentIndex.value = libraryData.value.files.length - 1
+    }
+  }
+
+  async function rate(rating: Rating) {
+    if (!libraryData.value || !currentImage.value) return
+    try {
+      await rateImage(currentImage.value.library, currentImage.value.file, rating)
+      // Update rating optimistically in current image
+      currentImage.value.rating = rating
+      console.log(`Rated image ${currentImage.value.file} as ${rating}`)
+    } catch (error) {
+      console.error('Error rating image:', error)
+    }
+  }
+
+  function setIndex(index: number) {
+    currentIndex.value = index
+    // Update URL with current index
+    if (libraryData.value) {
+      // Encode path for URL (replace / with ~)
+      const urlPath = libraryData.value.name === '__root__' ? 'root' : libraryData.value.name.replace(/\//g, '~')
+      router.replace({
+        name: 'library',
+        params: {
+          path: urlPath,
+          index: index.toString()
+        }
+      })
+    }
+  }
+
+  return {
+    currentIndex,
+    currentImage,
+    currentImagePath,
+    infoText,
+    direction,
+    isLoading,
+    next,
+    previous,
+    rate,
+    setIndex
+  }
+}

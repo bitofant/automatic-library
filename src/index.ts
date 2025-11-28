@@ -1,26 +1,39 @@
 import path from 'path';
 import express from 'express';
+import fs from 'fs';
 import { Library } from './library/library.js';
 import { fileURLToPath } from 'url';
 
-const PORT = process.env.PORT || 8081;
+const PORT = process.env.PORT || 3000;
 const app = express();
 
 const DEV_MODE = !process.argv.pop()?.endsWith('.js');
 const VERSION_TAG = DEV_MODE ? Date.now().toString() : 'prod';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const libs = new Library('/home/joran/src/stable-diffusion-webui/outputs/txt2img-images');
+const libPaths = [
+  '/home/joran/src/stable-diffusion-webui/outputs/txt2img-images',
+  '/Users/jtesse/src/_mine/stable-diffusion-webui/outputs/txt2img-images'
+];
+const libPath = libPaths.find(p => {
+  try {
+    return fs.existsSync(p);
+  } catch {
+    return false;
+  }
+}) || '';
+const libs = new Library(libPath);
 
-app.use(express.static(path.join(__dirname, 'static')));
+const staticDir = path.join(__dirname, DEV_MODE ? '../src/static' : 'static');
+app.use(express.static(staticDir));
 
-app.use('/', (req, res, next) => {
+app.use('/', (req, _res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
 });
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'static', 'index.html'));
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(staticDir, 'index.html'));
 });
 app.get('/version-tag', (req, res) => {
   if (req.query.longpoll) {
