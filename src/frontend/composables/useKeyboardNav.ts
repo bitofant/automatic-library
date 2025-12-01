@@ -6,6 +6,7 @@ export interface KeyboardNavHandlers {
   onPrevious: () => void
   onRate: (rating: Rating) => void
   onClose: () => void
+  onDelete: () => void
   flickingRef?: Ref<any>
 }
 
@@ -13,7 +14,7 @@ export function useKeyboardNav(handlers: KeyboardNavHandlers) {
   function handleKeydown(e: KeyboardEvent) {
     switch (e.key) {
       case 'ArrowRight':
-      case 'z':
+      case 'x':
         e.preventDefault()
         if (handlers.flickingRef?.value) {
           handlers.flickingRef.value.next()
@@ -21,7 +22,7 @@ export function useKeyboardNav(handlers: KeyboardNavHandlers) {
         handlers.onNext()
         break
       case 'ArrowLeft':
-      case 'x':
+      case 'z':
         e.preventDefault()
         if (handlers.flickingRef?.value) {
           handlers.flickingRef.value.prev()
