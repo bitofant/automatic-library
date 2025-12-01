@@ -142,3 +142,4 @@ vite.config.ts.timestamp-*
 # user data
 # ratings/*
 ratings/ratings.json
+.aider*
