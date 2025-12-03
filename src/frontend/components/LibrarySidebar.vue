@@ -29,6 +29,15 @@
       <v-list-subheader class="d-flex align-center">
         <span class="flex-grow-1">Libraries</span>
         <v-btn
+          :icon="isRefreshing ? 'mdi-loading' : 'mdi-refresh'"
+          size="x-small"
+          variant="text"
+          :class="{ 'rotating': isRefreshing }"
+          :disabled="isRefreshing"
+          @click.stop="$emit('refresh')"
+          title="Reload libraries from disk"
+        />
+        <v-btn
           icon="mdi-play"
           size="x-small"
           variant="text"
@@ -70,11 +79,24 @@ defineProps<{
   librariesData: LibrariesResponse
   expanded: boolean
   includeSubfolders: boolean
+  isRefreshing: boolean
 }>()
 
 defineEmits<{
   toggle: []
   'select-library': [path: string]
   'update:include-subfolders': [value: boolean]
+  refresh: []
 }>()
 </script>
+
+<style scoped>
+.rotating {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+</style>

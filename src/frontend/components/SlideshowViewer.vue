@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import Flicking from '@egjs/vue3-flicking'
 import type { FlickingOptions } from '@egjs/flicking'
 import type { LibraryData } from '../types'
@@ -47,6 +47,7 @@ const emit = defineEmits<{
 const libraryRef = computed(() => props.library)
 const slideshow = useSlideshow(libraryRef)
 const flickingRef = ref<InstanceType<typeof Flicking> | null>(null)
+const isDeletingImage = ref(false)
 
 const flickingOptions: FlickingOptions = {
   circular: true,
@@ -55,15 +56,29 @@ const flickingOptions: FlickingOptions = {
   align: 'center'
 }
 
+async function handleDelete() {
+  isDeletingImage.value = true
+  await slideshow.deleteCurrentImage()
+  // Keep flag set until after watchers have run
+  await nextTick()
+  await nextTick()
+  isDeletingImage.value = false
+}
+
 useKeyboardNav({
   onNext: slideshow.next,
   onPrevious: slideshow.previous,
   onRate: slideshow.rate,
   onClose: () => emit('close'),
+  onDelete: handleDelete,
   flickingRef: flickingRef
 })
 
 function handleFlickingChange(event: any) {
+  // Ignore Flicking's automatic reset during deletion
+  if (isDeletingImage.value) {
+    return
+  }
   slideshow.setIndex(event.index)
 }
 
@@ -81,6 +96,31 @@ watch(() => props.initialIndex, (newIndex) => {
     flickingRef.value.moveTo(newIndex, 0)
   }
 })
+
+// Sync Flicking when currentIndex changes programmatically (e.g., after deletion)
+watch(() => slideshow.currentIndex.value, (newIndex) => {
+  if (flickingRef.value && flickingRef.value.index !== newIndex && !flickingRef.value.animating) {
+    flickingRef.value.moveTo(newIndex, 0)
+  }
+})
+
+// Watch for files array changes (e.g., deletion) and force Flicking to sync
+watch(() => props.library.files.length, async () => {
+  // Use nextTick to ensure Vue has updated the DOM with new panel count
+  await nextTick()
+  if (flickingRef.value && props.library.files.length > 0) {
+    // Clamp index to valid range
+    const targetIndex = Math.min(slideshow.currentIndex.value, props.library.files.length - 1)
+
+    // Update index if it needs clamping (let currentIndex watcher handle Flicking move)
+    if (slideshow.currentIndex.value !== targetIndex) {
+      slideshow.setIndex(targetIndex)
+    } else if (flickingRef.value.index !== targetIndex) {
+      // Index is correct but Flicking is out of sync - force sync
+      flickingRef.value.moveTo(targetIndex, 0)
+    }
+  }
+}, { flush: 'post' })
 
 defineExpose({
   infoText: slideshow.infoText

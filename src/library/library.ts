@@ -23,7 +23,11 @@ export class Library {
   constructor(basePath: string) {
     this.basePath = basePath;
     this.ratingsManager = new RatingsManager(process.cwd() + '/ratings');
+    this.router = Router();
+    this.initializeFolders();
+  }
 
+  private initializeFolders() {
     // Scan tree recursively
     this.folderTree = this.scanFolderTree(this.basePath);
 
@@ -43,9 +47,6 @@ export class Library {
       ));
     }
 
-    // Setup router
-    this.router = Router();
-
     // List endpoint returns tree structure
     this.router.get('/', (req, res) => {
       res.json({
@@ -57,6 +58,69 @@ export class Library {
         } : null,
         folders: this.folderTree
       });
+    });
+
+    // Reload endpoint to re-scan filesystem
+    this.router.post('/reload', (req, res) => {
+      try {
+        this.reload();
+        res.json({
+          root: this.rootHasImages ? {
+            path: '__root__',
+            name: path.basename(this.basePath),
+            children: [],
+            hasImages: true
+          } : null,
+          folders: this.folderTree
+        });
+      } catch (error) {
+        console.error('Failed to reload libraries:', error);
+        res.status(500).json({ error: 'Failed to reload libraries' });
+      }
+    });
+
+    // Global delete endpoint
+    this.router.delete('/delete', (req, res) => {
+      if (!req.body || !req.body.library || !req.body.file) {
+        return res.status(400).json({ error: 'Invalid payload: library and file required' });
+      }
+
+      const libraryId: string = req.body.library;
+      const filename: string = req.body.file;
+
+      // Get the folder instance
+      const folder = this.folders.get(libraryId);
+      if (!folder) {
+        return res.status(404).json({ error: 'Library not found' });
+      }
+
+      // Construct full file path
+      const folderPath = libraryId === '__root__'
+        ? this.basePath
+        : path.join(this.basePath, libraryId);
+      const filePath = path.join(folderPath, filename);
+
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+
+      try {
+        // Delete the file
+        fs.unlinkSync(filePath);
+
+        // Remove from ratings centrally
+        this.ratingsManager.removeRating(libraryId, filename);
+
+        // Invalidate cache for all folders to pick up changes
+        this.folders.forEach(folder => folder.invalidateCache());
+
+        console.log(`Deleted: ${libraryId}/${filename}`);
+        res.sendStatus(200);
+      } catch (error) {
+        console.error('Failed to delete file:', error);
+        res.status(500).json({ error: 'Failed to delete file' });
+      }
     });
 
     // Register all nested folders with their full relative paths
@@ -71,6 +135,21 @@ export class Library {
       // Register folder router at its relative path
       this.router.use(`/${relPath}`, folder.getRouter());
     });
+  }
+
+  public reload() {
+    // Clear router stack to remove all existing routes
+    this.router.stack.length = 0;
+
+    // Clear folders map
+    this.folders.clear();
+
+    // Reset state
+    this.folderTree = [];
+    this.rootHasImages = false;
+
+    // Re-scan and re-register all routes
+    this.initializeFolders();
   }
 
   private scanFolderTree(basePath: string, relativePath: string = ''): FolderNode[] {

@@ -1,7 +1,7 @@
 import { ref, computed, watch, type Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { LibraryData, Rating } from '../types'
-import { rateImage } from '../services/api'
+import { rateImage, deleteImage } from '../services/api'
 
 export function useSlideshow(libraryData: Ref<LibraryData | null>) {
   const router = useRouter()
@@ -63,6 +63,30 @@ export function useSlideshow(libraryData: Ref<LibraryData | null>) {
     }
   }
 
+  async function deleteCurrentImage() {
+    if (!libraryData.value || !currentImage.value) return
+
+    const imageToDelete = currentImage.value
+    const indexToDelete = currentIndex.value
+
+    try {
+      // Call API to delete the image
+      await deleteImage(imageToDelete.library, imageToDelete.file)
+
+      // Remove from local array
+      libraryData.value.files.splice(indexToDelete, 1)
+
+      // Handle navigation after deletion
+      if (libraryData.value.files.length === 0) {
+        // No more images, go back to library list
+        router.push('/')
+      }
+      // Note: currentIndex will be updated by the files.length watcher in SlideshowViewer
+    } catch (error) {
+      console.error('Error deleting image:', error)
+    }
+  }
+
   function setIndex(index: number) {
     currentIndex.value = index
     // Update URL with current index
@@ -89,6 +113,7 @@ export function useSlideshow(libraryData: Ref<LibraryData | null>) {
     next,
     previous,
     rate,
+    deleteCurrentImage,
     setIndex
   }
 }

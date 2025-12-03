@@ -37,6 +37,10 @@ export function useKeyboardNav(handlers: KeyboardNavHandlers) {
         e.preventDefault()
         handlers.onRate(parseInt(e.key) as Rating)
         break
+      case 'Backspace':
+        e.preventDefault()
+        handlers.onDelete()
+        break
       case 'Escape':
         e.preventDefault()
         handlers.onClose()

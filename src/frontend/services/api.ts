@@ -5,6 +5,12 @@ export async function getLibraries(): Promise<LibrariesResponse> {
   return res.json()
 }
 
+export async function reloadLibraries(): Promise<LibrariesResponse> {
+  const res = await fetch('/libs/reload', { method: 'POST' })
+  if (!res.ok) throw new Error('Failed to reload libraries')
+  return res.json()
+}
+
 export async function getLibrary(
   path: string,
   ratings?: Array<1|2|3|4|5> | null,
@@ -42,6 +48,20 @@ export async function rateImage(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ img, rating })
   })
+}
+
+export async function deleteImage(
+  libraryPath: string,
+  img: string
+): Promise<void> {
+  const res = await fetch('/libs/delete', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ library: libraryPath, file: img })
+  })
+  if (!res.ok) {
+    throw new Error('Failed to delete image')
+  }
 }
 
 export async function getVersionTag(longpoll = false): Promise<string> {

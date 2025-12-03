@@ -113,6 +113,10 @@ export class LibraryFolder {
     });
   }
 
+  invalidateCache() {
+    this.nextFileUpdate = 0;
+  }
+
   getRouter(): Router {
     return this.router;
   }

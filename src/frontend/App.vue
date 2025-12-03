@@ -24,9 +24,11 @@
       :librariesData="librariesData"
       :expanded="sidebarExpanded"
       :includeSubfolders="includeSubfolders"
+      :isRefreshing="isRefreshing"
       @toggle="sidebarExpanded = !sidebarExpanded"
       @select-library="handleSelectLibrary"
       @update:include-subfolders="handleUpdateIncludeSubfolders"
+      @refresh="handleRefresh"
     />
 
     <v-main>
@@ -54,7 +56,7 @@ import InfoBar from './components/InfoBar.vue'
 import { useLibraries } from './composables/useLibraries'
 import { useDevMode } from './composables/useDevMode'
 
-const { librariesData, currentLibrary, activeFilter, fetchLibraries, loadLibrary, closeLibrary, setFilter } = useLibraries()
+const { librariesData, currentLibrary, activeFilter, isRefreshing, fetchLibraries, loadLibrary, closeLibrary, setFilter, refreshLibraries } = useLibraries()
 const route = useRoute()
 const { initDevMode } = useDevMode()
 const sidebarExpanded = ref(false)
@@ -159,6 +161,10 @@ async function handleUpdateIncludeSubfolders(value: boolean) {
   if (currentLibrary.value) {
     await loadLibrary(currentLibrary.value.name, activeFilter.value, undefined, value)
   }
+}
+
+async function handleRefresh() {
+  await refreshLibraries(includeSubfolders.value)
 }
 
 function handleCloseLibrary() {

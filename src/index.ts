@@ -26,6 +26,7 @@ const libs = new Library(libPath);
 
 const staticDir = path.join(__dirname, DEV_MODE ? '../src/static' : 'static');
 app.use(express.static(staticDir));
+app.use(express.json()); // Parse JSON request bodies
 
 app.use('/', (req, _res, next) => {
   console.log(`${req.method} ${req.url}`);

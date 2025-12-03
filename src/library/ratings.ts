@@ -121,6 +121,22 @@ export class RatingsManager {
     return undefined;
   }
 
+  removeRating(library: string, file: string) {
+    const ratings = this.loadRatings();
+    const fullRef = `${library}/${file}`;
+
+    // Remove from all rating arrays
+    for (const key of ["1", "2", "3", "4", "5"] as const) {
+      const index = ratings[key].indexOf(fullRef);
+      if (index !== -1) {
+        ratings[key].splice(index, 1);
+      }
+    }
+
+    // Save immediately for deletions
+    this.saveRatings();
+  }
+
   getFilesForLibrary(library: string, ratingFilter: Array<1|2|3|4|5> | null): string[] {
     const ratings = this.loadRatings();
 

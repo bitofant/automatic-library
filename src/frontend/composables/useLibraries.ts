@@ -1,13 +1,14 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { LibraryData, LibrariesResponse } from '../types'
-import { getLibraries, getLibrary } from '../services/api'
+import { getLibraries, getLibrary, reloadLibraries } from '../services/api'
 
 export function useLibraries() {
   const router = useRouter()
   const librariesData = ref<LibrariesResponse>({ root: null, folders: [] })
   const currentLibrary = ref<LibraryData | null>(null)
   const activeFilter = ref<1|2|3|4|5|null>(null)
+  const isRefreshing = ref(false)
 
   async function fetchLibraries() {
     try {
@@ -69,13 +70,32 @@ export function useLibraries() {
     router.push('/')
   }
 
+  async function refreshLibraries(includeSubfolders = false) {
+    try {
+      isRefreshing.value = true
+      librariesData.value = await reloadLibraries()
+
+      // If a library is currently loaded, reload it to reflect changes
+      if (currentLibrary.value) {
+        const libraryName = currentLibrary.value.name
+        await loadLibrary(libraryName, activeFilter.value, 0, includeSubfolders)
+      }
+    } catch (error) {
+      console.error('Failed to refresh libraries:', error)
+    } finally {
+      isRefreshing.value = false
+    }
+  }
+
   return {
     librariesData,
     currentLibrary,
     activeFilter,
+    isRefreshing,
     fetchLibraries,
     loadLibrary,
     closeLibrary,
-    setFilter
+    setFilter,
+    refreshLibraries
   }
 }
