@@ -11,11 +11,11 @@
         <v-btn
           v-for="star in 5"
           :key="star"
-          :icon="getStarIcon(star)"
+          :icon="getRatingIcon(star)"
           variant="text"
-          :color="activeFilter === getFilterValue(star) ? 'yellow-accent-3' : 'white'"
-          @click="handleFilterClick(getFilterValue(star))"
-          :title="getStarTitle(star)"
+          :color="getRatingIcon(star) === 'mdi-star' ? 'yellow-accent-3' : 'white'"
+          @click="handleRatingClick(getFilterValue(star))"
+          :title="getRatingTitle(star)"
         />
       </template>
     </v-app-bar>
@@ -25,10 +25,12 @@
       :expanded="sidebarExpanded"
       :includeSubfolders="includeSubfolders"
       :isRefreshing="isRefreshing"
+      :currentLibrary="currentLibrary"
       @toggle="sidebarExpanded = !sidebarExpanded"
       @select-library="handleSelectLibrary"
       @update:include-subfolders="handleUpdateIncludeSubfolders"
       @refresh="handleRefresh"
+      @filter-change="handleSidebarFilterChange"
     />
 
     <v-main>
@@ -70,37 +72,59 @@ const infoText = computed(() => {
   return slideshowRef.value?.infoText || ''
 })
 
-// Converts star position (1-5) to filter value
+// Converts star position (1-5) to rating value
 function getFilterValue(star: number): 1|2|3|4|5 {
   return star as 1|2|3|4|5
 }
 
-// Determines if a star should be filled based on active filter
-function getStarIcon(star: number): string {
-  if (activeFilter.value === null) {
-    return 'mdi-star-outline' // All empty when no filter
+// Determines if a star should be filled based on current image rating
+function getRatingIcon(star: number): string {
+  const currentRating = slideshowRef.value?.rate ? getCurrentImageRating() : null
+  if (currentRating === null || currentRating === undefined) {
+    return 'mdi-star-outline'
   }
-
-  // If we have a filter, fill stars up to that level
-  return star > activeFilter.value ? 'mdi-star-outline' : 'mdi-star'
+  return star <= currentRating ? 'mdi-star' : 'mdi-star-outline'
 }
 
-// Gets tooltip text for star button
-function getStarTitle(star: number): string {
+// Gets the current image rating
+function getCurrentImageRating(): number | null {
+  if (!currentLibrary.value || !slideshowRef.value?.currentIndex) return null
+  const index = slideshowRef.value.currentIndex.value
+  const currentFile = currentLibrary.value.files[index]
+  return currentFile?.rating ?? null
+}
+
+// Gets tooltip text for rating button
+function getRatingTitle(star: number): string {
   const symbols = {
-    1: '★☆☆☆☆ (1+ stars - all rated)',
-    2: '★★☆☆☆ (2+ stars)',
-    3: '★★★☆☆ (3+ stars)',
-    4: '★★★★☆ (4+ stars)',
-    5: '★★★★★ (5 stars only)'
+    1: 'Rate ★☆☆☆☆ (1 star)',
+    2: 'Rate ★★☆☆☆ (2 stars)',
+    3: 'Rate ★★★☆☆ (3 stars)',
+    4: 'Rate ★★★★☆ (4 stars)',
+    5: 'Rate ★★★★★ (5 stars)'
   }
   return symbols[star as 1|2|3|4|5]
 }
 
-function handleFilterClick(filterValue: 1|2|3|4|5) {
+async function handleRatingClick(rating: 1|2|3|4|5) {
+  if (slideshowRef.value?.rate) {
+    await slideshowRef.value.rate(rating)
+  }
+}
+
+async function handleSidebarFilterChange(filterValue: 1|2|3|4|5|null) {
   // Reset to first image when applying filter
   initialIndex.value = 0
-  setFilter(filterValue)
+
+  if (!currentLibrary.value) return
+
+  // If filterValue is null, we're clearing the filter
+  if (filterValue === null) {
+    await loadLibrary(currentLibrary.value.name, null, 0, includeSubfolders.value)
+  } else {
+    // Otherwise apply the filter
+    await loadLibrary(currentLibrary.value.name, filterValue, 0, includeSubfolders.value)
+  }
 }
 
 onMounted(async () => {

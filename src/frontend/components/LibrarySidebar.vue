@@ -56,6 +56,28 @@
     <!-- Settings at bottom -->
     <template #append>
       <v-divider />
+
+      <!-- Star rating filters -->
+      <v-list-item v-if="currentLibrary">
+        <div class="filter-section">
+          <div class="filter-label">Filter by rating:</div>
+          <div class="filter-buttons">
+            <v-btn
+              v-for="star in 5"
+              :key="star"
+              :icon="getStarIcon(star)"
+              size="small"
+              variant="text"
+              :color="activeSidebarFilter === getFilterValue(star) ? 'yellow-accent-3' : 'white'"
+              @click="handleSidebarFilterClick(getFilterValue(star))"
+              :title="getStarTitle(star)"
+            />
+          </div>
+        </div>
+      </v-list-item>
+
+      <v-divider />
+
       <v-list density="compact">
         <v-list-item>
           <v-checkbox
@@ -72,7 +94,8 @@
 </template>
 
 <script setup lang="ts">
-import type { LibrariesResponse } from '../types'
+import { ref } from 'vue'
+import type { LibrariesResponse, LibraryData } from '../types'
 import LibraryTreeNode from './LibraryTreeNode.vue'
 
 defineProps<{
@@ -80,14 +103,57 @@ defineProps<{
   expanded: boolean
   includeSubfolders: boolean
   isRefreshing: boolean
+  currentLibrary: LibraryData | null
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   toggle: []
   'select-library': [path: string]
   'update:include-subfolders': [value: boolean]
   refresh: []
+  'filter-change': [filter: 1|2|3|4|5|null]
 }>()
+
+// Independent sidebar filter state
+const activeSidebarFilter = ref<1|2|3|4|5|null>(null)
+
+// Converts star position (1-5) to filter value
+function getFilterValue(star: number): 1|2|3|4|5 {
+  return star as 1|2|3|4|5
+}
+
+// Determines if a star should be filled based on active filter
+function getStarIcon(star: number): string {
+  if (activeSidebarFilter.value === null) {
+    return 'mdi-star-outline' // All empty when no filter
+  }
+
+  // If we have a filter, fill stars up to that level
+  return star > activeSidebarFilter.value ? 'mdi-star-outline' : 'mdi-star'
+}
+
+// Gets tooltip text for star button
+function getStarTitle(star: number): string {
+  const symbols = {
+    1: '★☆☆☆☆ (1+ stars - all rated)',
+    2: '★★☆☆☆ (2+ stars)',
+    3: '★★★☆☆ (3+ stars)',
+    4: '★★★★☆ (4+ stars)',
+    5: '★★★★★ (5 stars only)'
+  }
+  return symbols[star as 1|2|3|4|5]
+}
+
+function handleSidebarFilterClick(filterValue: 1|2|3|4|5) {
+  // Toggle: if clicking same filter, turn it off
+  if (activeSidebarFilter.value === filterValue) {
+    activeSidebarFilter.value = null
+    emit('filter-change', null)
+  } else {
+    activeSidebarFilter.value = filterValue
+    emit('filter-change', filterValue)
+  }
+}
 </script>
 
 <style scoped>
@@ -98,5 +164,22 @@ defineEmits<{
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-label {
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
 }
 </style>

@@ -55,7 +55,6 @@ const flickingOptions = {
   inputType: ['mouse', 'touch'],
   align: 'center',
   bounce: 0,
-  preventDefaultOnDrag: true,
   renderOnlyVisible: true
 } as FlickingOptions
 
@@ -126,7 +125,9 @@ watch(() => props.library.files.length, async () => {
 }, { flush: 'post' })
 
 defineExpose({
-  infoText: slideshow.infoText
+  infoText: slideshow.infoText,
+  rate: slideshow.rate,
+  currentIndex: slideshow.currentIndex
 })
 </script>
 
