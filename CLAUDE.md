@@ -162,6 +162,43 @@ The slideshow uses the Flicking carousel library for robust image navigation wit
 
 ## UI Features
 
+### Top Bar Controls
+The top bar provides quick access to rating, deletion, and fullscreen controls when a library is loaded:
+
+**Rating Buttons (5 stars):**
+- Click a star to rate the current image (1-5 stars)
+- Filled yellow stars indicate the current image's rating
+- Works identically to keyboard shortcuts (1-5 keys)
+- Stars update immediately after rating
+
+**Delete Button:**
+- Trash icon at the right side of the top bar
+- Deletes the current image from disk
+- Automatically navigates to the next image
+- Works identically to the Delete key
+
+**Fullscreen Button:**
+- Fullscreen icon at the far right of the top bar
+- Toggles fullscreen mode on/off
+- Icon changes to exit-fullscreen when in fullscreen mode
+- Syncs with browser's F11 key and Esc to exit
+
+### Sidebar Features
+The sidebar provides library navigation and filtering options:
+
+**Rating Filter Buttons:**
+- Independent set of 5 star buttons for filtering images by rating
+- Click a star to show only images with that rating or higher
+- Active filter highlights in yellow
+- Shows: ★☆☆☆☆ (1+), ★★☆☆☆ (2+), ★★★☆☆ (3+), ★★★★☆ (4+), ★★★★★ (5 only)
+- Click active filter again to disable and show all images
+- Only visible when a library is loaded
+- Functions independently from top bar rating buttons
+
+**Include Subfolders:**
+- Checkbox to show images from subfolders
+- Setting persists to localStorage
+
 ### Info Bar
 - Fixed position in bottom-left corner with rounded top-right corner
 - Displays: `Library - index / total - filename.png - ★★★☆☆`
@@ -175,13 +212,6 @@ The slideshow uses the Flicking carousel library for robust image navigation wit
 - Uses `object-fit: contain` to prevent cropping
 - No max-resolution cap - scales up on large displays
 - Responsive to window resizing
-
-### Star Rating Filter
-- Top bar shows 5 star buttons (first 2 are decorative)
-- Click star 3/4/5 to filter images by rating
-- Active filter highlights in yellow
-- Shows: ★★★☆☆ (3+), ★★★★☆ (4+), ★★★★★ (5 only)
-- Click active filter again to disable
 
 ## Migration Notes
 
