@@ -49,12 +49,15 @@ const slideshow = useSlideshow(libraryRef)
 const flickingRef = ref<InstanceType<typeof Flicking> | null>(null)
 const isDeletingImage = ref(false)
 
-const flickingOptions: FlickingOptions = {
+const flickingOptions = {
   circular: true,
   duration: 300,
   inputType: ['mouse', 'touch'],
-  align: 'center'
-}
+  align: 'center',
+  bounce: 0,
+  preventDefaultOnDrag: true,
+  renderOnlyVisible: true
+} as FlickingOptions
 
 async function handleDelete() {
   isDeletingImage.value = true
@@ -177,11 +180,12 @@ defineExpose({
 }
 
 .flicking-panel {
-  width: 100%;
+  width: 100vw;
   height: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .slideshow-image {
