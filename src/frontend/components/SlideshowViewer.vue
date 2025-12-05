@@ -127,7 +127,8 @@ watch(() => props.library.files.length, async () => {
 defineExpose({
   infoText: slideshow.infoText,
   rate: slideshow.rate,
-  currentIndex: slideshow.currentIndex
+  currentIndex: slideshow.currentIndex,
+  deleteCurrentImage: handleDelete
 })
 </script>
 

@@ -17,6 +17,14 @@
           @click="handleRatingClick(getFilterValue(star))"
           :title="getRatingTitle(star)"
         />
+
+        <v-btn
+          icon="mdi-delete"
+          variant="text"
+          color="white"
+          @click="handleDeleteClick"
+          title="Delete current image (Del key)"
+        />
       </template>
     </v-app-bar>
 
@@ -109,6 +117,12 @@ function getRatingTitle(star: number): string {
 async function handleRatingClick(rating: 1|2|3|4|5) {
   if (slideshowRef.value?.rate) {
     await slideshowRef.value.rate(rating)
+  }
+}
+
+async function handleDeleteClick() {
+  if (slideshowRef.value?.deleteCurrentImage) {
+    await slideshowRef.value.deleteCurrentImage()
   }
 }
 
