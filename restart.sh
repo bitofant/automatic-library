@@ -1,5 +1,5 @@
 #!/bin/bash
 
-./async-stop.sh
+./async-kill.sh
 npm run build
 ./async-start.sh

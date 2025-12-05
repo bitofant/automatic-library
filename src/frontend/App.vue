@@ -89,6 +89,16 @@ const infoText = computed(() => {
   return slideshowRef.value?.infoText || ''
 })
 
+// Computed property for current image rating - reactive to image changes
+// Accesses the currentImage from the slideshow to ensure proper reactivity
+const currentImageRating = computed(() => {
+  // currentImage is automatically unwrapped by Vue when accessed through ref
+  const currentImg = slideshowRef.value?.currentImage
+  const rating = currentImg?.rating ?? null
+  console.log('[App.vue] currentImageRating computed - file:', currentImg?.file, 'rating:', rating)
+  return rating
+})
+
 // Converts star position (1-5) to rating value
 function getFilterValue(star: number): 1|2|3|4|5 {
   return star as 1|2|3|4|5
@@ -96,19 +106,11 @@ function getFilterValue(star: number): 1|2|3|4|5 {
 
 // Determines if a star should be filled based on current image rating
 function getRatingIcon(star: number): string {
-  const currentRating = slideshowRef.value?.rate ? getCurrentImageRating() : null
-  if (currentRating === null || currentRating === undefined) {
+  const rating = currentImageRating.value
+  if (rating === null || rating === undefined) {
     return 'mdi-star-outline'
   }
-  return star <= currentRating ? 'mdi-star' : 'mdi-star-outline'
-}
-
-// Gets the current image rating
-function getCurrentImageRating(): number | null {
-  if (!currentLibrary.value || !slideshowRef.value?.currentIndex) return null
-  const index = slideshowRef.value.currentIndex.value
-  const currentFile = currentLibrary.value.files[index]
-  return currentFile?.rating ?? null
+  return star <= rating ? 'mdi-star' : 'mdi-star-outline'
 }
 
 // Gets tooltip text for rating button
@@ -243,3 +245,19 @@ function handleCloseLibrary() {
   closeLibrary()
 }
 </script>
+
+<style scoped>
+/* Smooth transition for star rating changes */
+:deep(.v-btn .v-icon) {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Slightly scale up stars when they become filled */
+:deep(.v-btn .mdi-star) {
+  transform: scale(1.05);
+}
+
+:deep(.v-btn .mdi-star-outline) {
+  transform: scale(1);
+}
+</style>

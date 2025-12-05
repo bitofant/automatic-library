@@ -11,7 +11,9 @@ export function useSlideshow(libraryData: Ref<LibraryData | null>) {
 
   const currentImage = computed(() => {
     if (!libraryData.value || currentIndex.value < 0) return null
-    return libraryData.value.files[currentIndex.value]
+    const img = libraryData.value.files[currentIndex.value]
+    console.log('[useSlideshow] currentImage computed - index:', currentIndex.value, 'file:', img?.file, 'rating:', img?.rating)
+    return img
   })
 
   const currentImagePath = computed(() => {
@@ -57,7 +59,6 @@ export function useSlideshow(libraryData: Ref<LibraryData | null>) {
       await rateImage(currentImage.value.library, currentImage.value.file, rating)
       // Update rating optimistically in current image
       currentImage.value.rating = rating
-      console.log(`Rated image ${currentImage.value.file} as ${rating}`)
     } catch (error) {
       console.error('Error rating image:', error)
     }

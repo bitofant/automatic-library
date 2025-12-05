@@ -17,17 +17,23 @@ export function useKeyboardNav(handlers: KeyboardNavHandlers) {
       case 'x':
         e.preventDefault()
         if (handlers.flickingRef?.value) {
+          // Let Flicking handle navigation and fire willChange/changed events
           handlers.flickingRef.value.next()
+        } else {
+          // Fallback if no Flicking instance
+          handlers.onNext()
         }
-        handlers.onNext()
         break
       case 'ArrowLeft':
       case 'z':
         e.preventDefault()
         if (handlers.flickingRef?.value) {
+          // Let Flicking handle navigation and fire willChange/changed events
           handlers.flickingRef.value.prev()
+        } else {
+          // Fallback if no Flicking instance
+          handlers.onPrevious()
         }
-        handlers.onPrevious()
         break
       case '1':
       case '2':

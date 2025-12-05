@@ -11,6 +11,7 @@
       v-else
       ref="flickingRef"
       :options="flickingOptions"
+      @will-change="handleFlickingWillChange"
       @changed="handleFlickingChange"
     >
       <div
@@ -76,11 +77,22 @@ useKeyboardNav({
   flickingRef: flickingRef
 })
 
+function handleFlickingWillChange(event: any) {
+  // Update index immediately when animation starts (for UI updates like ratings)
+  if (isDeletingImage.value) {
+    return
+  }
+  console.log('[SlideshowViewer] willChange - current:', slideshow.currentIndex.value, 'target:', event.index, 'event:', event)
+  slideshow.currentIndex.value = event.index
+}
+
 function handleFlickingChange(event: any) {
   // Ignore Flicking's automatic reset during deletion
   if (isDeletingImage.value) {
     return
   }
+  console.log('[SlideshowViewer] changed - index:', event.index, 'event:', event)
+  // Update URL after animation completes
   slideshow.setIndex(event.index)
 }
 
@@ -128,6 +140,7 @@ defineExpose({
   infoText: slideshow.infoText,
   rate: slideshow.rate,
   currentIndex: slideshow.currentIndex,
+  currentImage: slideshow.currentImage,
   deleteCurrentImage: handleDelete
 })
 </script>
@@ -194,5 +207,6 @@ defineExpose({
   width: 100%;
   height: 100%;
   object-fit: contain;
+  touch-action: pinch-zoom;
 }
 </style>
