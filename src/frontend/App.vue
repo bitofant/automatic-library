@@ -25,6 +25,14 @@
           @click="handleDeleteClick"
           title="Delete current image (Del key)"
         />
+
+        <v-btn
+          :icon="isFullscreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen'"
+          variant="text"
+          color="white"
+          @click="toggleFullscreen"
+          :title="isFullscreen ? 'Exit fullscreen (F11)' : 'Enter fullscreen (F11)'"
+        />
       </template>
     </v-app-bar>
 
@@ -57,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import LibrarySidebar from './components/LibrarySidebar.vue'
 import SlideshowViewer from './components/SlideshowViewer.vue'
@@ -72,6 +80,7 @@ const { initDevMode } = useDevMode()
 const sidebarExpanded = ref(false)
 const slideshowRef = ref<InstanceType<typeof SlideshowViewer> | null>(null)
 const initialIndex = ref(0)
+const isFullscreen = ref(false)
 
 // Load includeSubfolders from localStorage, default to false
 const includeSubfolders = ref(localStorage.getItem('includeSubfolders') === 'true')
@@ -126,6 +135,23 @@ async function handleDeleteClick() {
   }
 }
 
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen()
+    } else {
+      await document.exitFullscreen()
+    }
+  } catch (error) {
+    console.error('Error toggling fullscreen:', error)
+  }
+}
+
+// Listen for fullscreen changes to update button state
+function handleFullscreenChange() {
+  isFullscreen.value = !!document.fullscreenElement
+}
+
 async function handleSidebarFilterChange(filterValue: 1|2|3|4|5|null) {
   // Reset to first image when applying filter
   initialIndex.value = 0
@@ -145,6 +171,9 @@ onMounted(async () => {
   await fetchLibraries()
   initDevMode()
 
+  // Set up fullscreen change listener
+  document.addEventListener('fullscreenchange', handleFullscreenChange)
+
   // Load library from route if present
   if (route.params.path) {
     const index = route.params.index ? parseInt(route.params.index as string) : 0
@@ -156,6 +185,11 @@ onMounted(async () => {
 
     await loadLibrary(decodedPath, null, index, includeSubfolders.value)
   }
+})
+
+onUnmounted(() => {
+  // Clean up fullscreen listener
+  document.removeEventListener('fullscreenchange', handleFullscreenChange)
 })
 
 // Watch route changes (browser back/forward)
