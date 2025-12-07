@@ -22,6 +22,7 @@
         <img
           :src="`/libs/${fileRef.library}/${fileRef.file}`"
           class="slideshow-image"
+          @click="handleImageClick"
         />
       </div>
     </Flicking>
@@ -43,6 +44,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
+  enterZoom: []
 }>()
 
 const libraryRef = computed(() => props.library)
@@ -66,6 +68,22 @@ async function handleDelete() {
   await nextTick()
   await nextTick()
   isDeletingImage.value = false
+}
+
+function handleImageClick() {
+  emit('enterZoom')
+}
+
+function navigateNext() {
+  if (flickingRef.value) {
+    flickingRef.value.next()
+  }
+}
+
+function navigatePrevious() {
+  if (flickingRef.value) {
+    flickingRef.value.prev()
+  }
 }
 
 useKeyboardNav({
@@ -141,7 +159,9 @@ defineExpose({
   rate: slideshow.rate,
   currentIndex: slideshow.currentIndex,
   currentImage: slideshow.currentImage,
-  deleteCurrentImage: handleDelete
+  deleteCurrentImage: handleDelete,
+  navigateNext,
+  navigatePrevious
 })
 </script>
 

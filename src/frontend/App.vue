@@ -57,6 +57,7 @@
         :library="currentLibrary"
         :initial-index="initialIndex"
         @close="handleCloseLibrary"
+        @enter-zoom="handleEnterZoom"
       />
     </v-main>
 
@@ -168,7 +169,29 @@ async function toggleFullscreen() {
   }
 }
 
-function handleTapZoneClick() {
+function handleTapZoneClick(event: MouseEvent) {
+  const clickX = event.clientX
+  const screenWidth = window.innerWidth
+  const leftThreshold = screenWidth * 0.2  // Left 20%
+  const rightThreshold = screenWidth * 0.8  // Right 80%
+
+  if (clickX < leftThreshold) {
+    // Left 20% - previous image
+    if (slideshowRef.value?.navigatePrevious) {
+      slideshowRef.value.navigatePrevious()
+    }
+  } else if (clickX > rightThreshold) {
+    // Right 20% - next image
+    if (slideshowRef.value?.navigateNext) {
+      slideshowRef.value.navigateNext()
+    }
+  } else {
+    // Middle 60% - enter zoom mode
+    handleEnterZoom()
+  }
+}
+
+function handleEnterZoom() {
   if (currentImage.value) {
     zoomOverlayVisible.value = true
   }
@@ -297,7 +320,7 @@ function handleCloseLibrary() {
   left: 0;
   right: 0;
   height: 10vh;
-  z-index: 40;  /* Above slideshow, below InfoBar (50) */
+  z-index: 60;  /* Above InfoBar (50) */
   background: transparent;
   pointer-events: auto;
   cursor: pointer;
