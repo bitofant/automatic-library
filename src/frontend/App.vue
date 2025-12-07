@@ -61,6 +61,19 @@
     </v-main>
 
     <InfoBar :info="infoText" />
+
+    <!-- Invisible tap zone in bottom 10% for zoom trigger -->
+    <div
+      v-if="currentLibrary"
+      class="tap-zone"
+      @click="handleTapZoneClick"
+    />
+
+    <ZoomOverlay
+      :visible="zoomOverlayVisible"
+      :image="currentImage"
+      @close="handleZoomOverlayClose"
+    />
   </v-app>
 </template>
 
@@ -71,6 +84,7 @@ import LibrarySidebar from './components/LibrarySidebar.vue'
 import SlideshowViewer from './components/SlideshowViewer.vue'
 import WelcomeScreen from './components/WelcomeScreen.vue'
 import InfoBar from './components/InfoBar.vue'
+import ZoomOverlay from './components/ZoomOverlay.vue'
 import { useLibraries } from './composables/useLibraries'
 import { useDevMode } from './composables/useDevMode'
 
@@ -81,12 +95,17 @@ const sidebarExpanded = ref(false)
 const slideshowRef = ref<InstanceType<typeof SlideshowViewer> | null>(null)
 const initialIndex = ref(0)
 const isFullscreen = ref(false)
+const zoomOverlayVisible = ref(false)
 
 // Load includeSubfolders from localStorage, default to false
 const includeSubfolders = ref(localStorage.getItem('includeSubfolders') === 'true')
 
 const infoText = computed(() => {
   return slideshowRef.value?.infoText || ''
+})
+
+const currentImage = computed(() => {
+  return slideshowRef.value?.currentImage || null
 })
 
 // Computed property for current image rating - reactive to image changes
@@ -147,6 +166,16 @@ async function toggleFullscreen() {
   } catch (error) {
     console.error('Error toggling fullscreen:', error)
   }
+}
+
+function handleTapZoneClick() {
+  if (currentImage.value) {
+    zoomOverlayVisible.value = true
+  }
+}
+
+function handleZoomOverlayClose() {
+  zoomOverlayVisible.value = false
 }
 
 // Listen for fullscreen changes to update button state
@@ -259,5 +288,18 @@ function handleCloseLibrary() {
 
 :deep(.v-btn .mdi-star-outline) {
   transform: scale(1);
+}
+
+/* Invisible tap zone in bottom 10% for zoom mode trigger */
+.tap-zone {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 10vh;
+  z-index: 40;  /* Above slideshow, below InfoBar (50) */
+  background: transparent;
+  pointer-events: auto;
+  cursor: pointer;
 }
 </style>
