@@ -93,15 +93,24 @@ export class LibraryFolder {
   }
 
   private isTodaysFolder(): boolean {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    // Get today's date in local timezone (not UTC)
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const today = `${year}-${month}-${day}`; // YYYY-MM-DD in local time
+
     const folderName = path.basename(this.folderPath);
     return folderName === today;
   }
 
   private updateFilesIfNeeded() {
-    if (Date.now() < this.nextFileUpdate) {
+    const shouldCheck = Date.now() >= this.nextFileUpdate;
+
+    if (!shouldCheck) {
       return;
     }
+
     let updatedFiles = fs.readdirSync(this.folderPath)
       .filter(f => f.match(/\.(png|jpg|jpeg|gif|bmp|webp)$/i))
       .sort();

@@ -99,8 +99,10 @@ export function useLibraries() {
       return
     }
 
+    const libraryName = currentLibrary.value.name
+
     try {
-      const result = await waitForLibraryUpdate(currentLibrary.value.name)
+      const result = await waitForLibraryUpdate(libraryName)
 
       if (!isLongPolling.value) {
         // Long polling was stopped while waiting
@@ -108,11 +110,8 @@ export function useLibraries() {
       }
 
       if (result.changed) {
-        console.log('Library changed, reloading...')
         // Reload the library silently without changing the current index
         if (currentLibrary.value) {
-          const libraryName = currentLibrary.value.name
-
           // Map filter to ratings array
           let ratingsFilter: Array<1|2|3|4|5> | null = null;
           const filter = activeFilter.value
@@ -128,7 +127,8 @@ export function useLibraries() {
             ratingsFilter = [1, 2, 3, 4, 5];
           }
 
-          currentLibrary.value = await getLibrary(libraryName, ratingsFilter, currentIncludeSubfolders)
+          const updatedLibrary = await getLibrary(libraryName, ratingsFilter, currentIncludeSubfolders)
+          currentLibrary.value = updatedLibrary
         }
       }
 
