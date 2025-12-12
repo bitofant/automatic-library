@@ -1,7 +1,7 @@
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { LibraryData, LibrariesResponse } from '../types'
-import { getLibraries, getLibrary, reloadLibraries } from '../services/api'
+import { getLibraries, getLibrary, reloadLibraries, waitForLibraryUpdate } from '../services/api'
 
 export function useLibraries() {
   const router = useRouter()
@@ -9,6 +9,8 @@ export function useLibraries() {
   const currentLibrary = ref<LibraryData | null>(null)
   const activeFilter = ref<1|2|3|4|5|null>(null)
   const isRefreshing = ref(false)
+  const isLongPolling = ref(false)
+  let currentIncludeSubfolders = false
 
   async function fetchLibraries() {
     try {
@@ -36,6 +38,7 @@ export function useLibraries() {
 
       currentLibrary.value = await getLibrary(path, ratingsFilter, includeSubfolders)
       activeFilter.value = filter
+      currentIncludeSubfolders = includeSubfolders
       document.title = `${path} - Automatic Library`
 
       // Encode path for URL (replace / with ~)
@@ -46,6 +49,9 @@ export function useLibraries() {
       const targetPath = `/library/${urlPath}/${finalIndex}`
 
       await router.push(targetPath)
+
+      // Start long-polling for this library
+      startLongPolling()
     } catch (error) {
       console.error('Failed to load library:', error)
     }
@@ -64,6 +70,7 @@ export function useLibraries() {
   }
 
   function closeLibrary() {
+    stopLongPolling()
     currentLibrary.value = null
     activeFilter.value = null
     document.title = 'Automatic Library'
@@ -85,6 +92,66 @@ export function useLibraries() {
     } finally {
       isRefreshing.value = false
     }
+  }
+
+  async function longPollForUpdates() {
+    if (!currentLibrary.value || !isLongPolling.value) {
+      return
+    }
+
+    try {
+      const result = await waitForLibraryUpdate(currentLibrary.value.name)
+
+      if (!isLongPolling.value) {
+        // Long polling was stopped while waiting
+        return
+      }
+
+      if (result.changed) {
+        console.log('Library changed, reloading...')
+        // Reload the library silently without changing the current index
+        if (currentLibrary.value) {
+          const libraryName = currentLibrary.value.name
+
+          // Map filter to ratings array
+          let ratingsFilter: Array<1|2|3|4|5> | null = null;
+          const filter = activeFilter.value
+          if (filter === 5) {
+            ratingsFilter = [5];
+          } else if (filter === 4) {
+            ratingsFilter = [4, 5];
+          } else if (filter === 3) {
+            ratingsFilter = [3, 4, 5];
+          } else if (filter === 2) {
+            ratingsFilter = [2, 3, 4, 5];
+          } else if (filter === 1) {
+            ratingsFilter = [1, 2, 3, 4, 5];
+          }
+
+          currentLibrary.value = await getLibrary(libraryName, ratingsFilter, currentIncludeSubfolders)
+        }
+      }
+
+      // Continue long-polling
+      setTimeout(longPollForUpdates, 10)
+    } catch (error) {
+      console.error('Long poll failed:', error)
+      // Retry after a delay
+      if (isLongPolling.value) {
+        setTimeout(longPollForUpdates, 5000)
+      }
+    }
+  }
+
+  function startLongPolling() {
+    if (!isLongPolling.value) {
+      isLongPolling.value = true
+      longPollForUpdates()
+    }
+  }
+
+  function stopLongPolling() {
+    isLongPolling.value = false
   }
 
   return {

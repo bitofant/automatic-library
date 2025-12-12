@@ -69,3 +69,9 @@ export async function getVersionTag(longpoll = false): Promise<string> {
   const res = await fetch(url)
   return res.text()
 }
+
+export async function waitForLibraryUpdate(libraryPath: string): Promise<{ timeout: boolean; changed: boolean }> {
+  const encodedPath = libraryPath.split('/').map(encodeURIComponent).join('/');
+  const res = await fetch(`/libs/${encodedPath}/wait-for-update`)
+  return res.json()
+}
