@@ -7,6 +7,7 @@ export interface KeyboardNavHandlers {
   onRate: (rating: Rating) => void
   onClose: () => void
   onDelete: () => void
+  onFullscreen: () => void
   flickingRef?: Ref<any>
 }
 
@@ -50,6 +51,11 @@ export function useKeyboardNav(handlers: KeyboardNavHandlers) {
       case 'Escape':
         e.preventDefault()
         handlers.onClose()
+        break
+      case 'f':
+      case 'F':
+        e.preventDefault()
+        handlers.onFullscreen()
         break
     }
   }

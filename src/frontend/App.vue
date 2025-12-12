@@ -58,6 +58,7 @@
         :initial-index="initialIndex"
         @close="handleCloseLibrary"
         @enter-zoom="handleEnterZoom"
+        @fullscreen="toggleFullscreen"
       />
     </v-main>
 

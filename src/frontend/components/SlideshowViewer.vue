@@ -45,6 +45,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
   enterZoom: []
+  fullscreen: []
 }>()
 
 const libraryRef = computed(() => props.library)
@@ -92,6 +93,7 @@ useKeyboardNav({
   onRate: slideshow.rate,
   onClose: () => emit('close'),
   onDelete: handleDelete,
+  onFullscreen: () => emit('fullscreen'),
   flickingRef: flickingRef
 })
 
