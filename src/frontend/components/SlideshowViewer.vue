@@ -100,7 +100,6 @@ function handleFlickingWillChange(event: any) {
   if (isDeletingImage.value) {
     return
   }
-  console.log('[SlideshowViewer] willChange - current:', slideshow.currentIndex.value, 'target:', event.index, 'event:', event)
   slideshow.currentIndex.value = event.index
 }
 
@@ -109,7 +108,6 @@ function handleFlickingChange(event: any) {
   if (isDeletingImage.value) {
     return
   }
-  console.log('[SlideshowViewer] changed - index:', event.index, 'event:', event)
   // Update URL after animation completes
   slideshow.setIndex(event.index)
 }

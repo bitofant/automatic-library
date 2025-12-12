@@ -25,7 +25,6 @@ export function useDevMode() {
     try {
       const newTag = await getVersionTag(true)
       if (newTag !== versionTag.value) {
-        console.log('New version detected, reloading page.')
         window.location.reload()
       } else {
         setTimeout(longPollVersionTag, 10)

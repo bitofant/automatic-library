@@ -12,7 +12,6 @@ export function useSlideshow(libraryData: Ref<LibraryData | null>) {
   const currentImage = computed(() => {
     if (!libraryData.value || currentIndex.value < 0) return null
     const img = libraryData.value.files[currentIndex.value]
-    console.log('[useSlideshow] currentImage computed - index:', currentIndex.value, 'file:', img?.file, 'rating:', img?.rating)
     return img
   })
 

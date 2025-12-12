@@ -115,7 +115,6 @@ const currentImageRating = computed(() => {
   // currentImage is automatically unwrapped by Vue when accessed through ref
   const currentImg = slideshowRef.value?.currentImage
   const rating = currentImg?.rating ?? null
-  console.log('[App.vue] currentImageRating computed - file:', currentImg?.file, 'rating:', rating)
   return rating
 })
 
