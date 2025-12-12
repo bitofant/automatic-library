@@ -10,8 +10,11 @@ export class LibraryFolder {
   private libraryId: string;
   private router: Router;
   private files: string[] = [];
+  private lastChangeDate: number = 0;
   private nextFileUpdate: number = 0;
   private ratingsManager: RatingsManager;
+  private watcher: fs.FSWatcher | null = null;
+  private updateCallbacks: Array<(changed: boolean) => void> = [];
 
   constructor(folderPath: string, ratingsManager: RatingsManager, libraryId: string) {
     this.folderPath = folderPath;
@@ -36,6 +39,12 @@ export class LibraryFolder {
       // Parse recursive parameter: ?recursive=true
       const recursive = req.query.recursive === 'true';
 
+      const etag = `${this.lastChangeDate}-${ratingsFilter ? ratingsFilter.join('') : 'all'}-${recursive ? 'r' : 'nr'}`;
+      res.setHeader('ETag', etag);
+      if (req.headers['if-none-match'] === etag) {
+        return res.sendStatus(304);
+      }
+
       res.json({
         name: this.libraryId === '__root__'
           ? path.basename(this.folderPath)
@@ -54,15 +63,61 @@ export class LibraryFolder {
 
       res.sendStatus(200);
     });
+    this.router.get('/wait-for-update', (req, res) => {
+      const timeout = setTimeout(() => {
+        // Remove callback from queue
+        const index = this.updateCallbacks.indexOf(callback);
+        if (index > -1) {
+          this.updateCallbacks.splice(index, 1);
+        }
+        res.json({ timeout: true, changed: false });
+      }, 30000); // 30 second timeout
+
+      const callback = (changed: boolean) => {
+        clearTimeout(timeout);
+        res.json({ timeout: false, changed });
+      };
+
+      this.updateCallbacks.push(callback);
+    });
     this.router.use(static_(this.folderPath));
+
+    if (this.isTodaysFolder()) {
+      this.watcher = fs.watch(this.folderPath, (_eventType, filename) => {
+        if (filename && filename.match(/\.(png|jpg|jpeg|gif|bmp|webp)$/i)) {
+          this.invalidateCache();
+          this.updateFilesIfNeeded();
+        }
+      });
+    }
+  }
+
+  private isTodaysFolder(): boolean {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const folderName = path.basename(this.folderPath);
+    return folderName === today;
   }
 
   private updateFilesIfNeeded() {
     if (Date.now() < this.nextFileUpdate) {
       return;
     }
-    this.files = fs.readdirSync(this.folderPath).sort().filter(f => f.match(/\.(png|jpg|jpeg|gif|bmp|webp)$/i));
+    let updatedFiles = fs.readdirSync(this.folderPath)
+      .filter(f => f.match(/\.(png|jpg|jpeg|gif|bmp|webp)$/i))
+      .sort();
+
+    let changed = false;
+    if (updatedFiles.length !== this.files.length || JSON.stringify(updatedFiles) !== JSON.stringify(this.files)) {
+      this.lastChangeDate = Date.now();
+      this.files = updatedFiles;
+      changed = true;
+    }
     this.nextFileUpdate = Date.now() + FILES_UPDATE_INTERVAL;
+
+    // Notify all waiting long-poll requests
+    const callbacks = this.updateCallbacks;
+    this.updateCallbacks = [];
+    callbacks.forEach(cb => cb(changed));
   }
 
   private scanFilesRecursively(dirPath: string, relativePath: string = ''): string[] {
@@ -119,5 +174,12 @@ export class LibraryFolder {
 
   getRouter(): Router {
     return this.router;
+  }
+
+  dispose() {
+    if (this.watcher) {
+      this.watcher.close();
+      this.watcher = null;
+    }
   }
 }
