@@ -18,8 +18,16 @@ export function useKeyboardNav(handlers: KeyboardNavHandlers) {
       case 'x':
         e.preventDefault()
         if (handlers.flickingRef?.value) {
-          // Let Flicking handle navigation and fire willChange/changed events
-          handlers.flickingRef.value.next()
+          if (e.metaKey) {
+            // Command+Arrow: Jump 10 images forward
+            const flicking = handlers.flickingRef.value
+            const currentIndex = flicking.index
+            const targetIndex = Math.min(currentIndex + 10, flicking.panelCount - 1)
+            flicking.moveTo(targetIndex)
+          } else {
+            // Let Flicking handle navigation and fire willChange/changed events
+            handlers.flickingRef.value.next()
+          }
         } else {
           // Fallback if no Flicking instance
           handlers.onNext()
@@ -29,8 +37,16 @@ export function useKeyboardNav(handlers: KeyboardNavHandlers) {
       case 'z':
         e.preventDefault()
         if (handlers.flickingRef?.value) {
-          // Let Flicking handle navigation and fire willChange/changed events
-          handlers.flickingRef.value.prev()
+          if (e.metaKey) {
+            // Command+Arrow: Jump 10 images backward
+            const flicking = handlers.flickingRef.value
+            const currentIndex = flicking.index
+            const targetIndex = Math.max(currentIndex - 10, 0)
+            flicking.moveTo(targetIndex)
+          } else {
+            // Let Flicking handle navigation and fire willChange/changed events
+            handlers.flickingRef.value.prev()
+          }
         } else {
           // Fallback if no Flicking instance
           handlers.onPrevious()
