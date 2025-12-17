@@ -87,6 +87,21 @@ function navigatePrevious() {
   }
 }
 
+function handleDownload() {
+  const currentImage = slideshow.currentImage.value
+  if (!currentImage) return
+
+  const imageUrl = `/libs/${currentImage.library}/${currentImage.file}`
+  const filename = currentImage.file.split('/').pop() || 'image.png'
+
+  const link = document.createElement('a')
+  link.href = imageUrl
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
 useKeyboardNav({
   onNext: slideshow.next,
   onPrevious: slideshow.previous,
@@ -94,6 +109,7 @@ useKeyboardNav({
   onClose: () => emit('close'),
   onDelete: handleDelete,
   onFullscreen: () => emit('fullscreen'),
+  onDownload: handleDownload,
   flickingRef: flickingRef
 })
 
