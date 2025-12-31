@@ -1,4 +1,4 @@
-import type { LibraryData, Rating, LibrariesResponse } from '../types'
+import type { LibraryData, Rating, LibrariesResponse, ImageMetadata } from '../types'
 
 export async function getLibraries(): Promise<LibrariesResponse> {
   const res = await fetch('/libs')
@@ -73,5 +73,15 @@ export async function getVersionTag(longpoll = false): Promise<string> {
 export async function waitForLibraryUpdate(libraryPath: string): Promise<{ timeout: boolean; changed: boolean }> {
   const encodedPath = libraryPath.split('/').map(encodeURIComponent).join('/');
   const res = await fetch(`/libs/${encodedPath}/wait-for-update`)
+  return res.json()
+}
+
+export async function getImageMetadata(library: string, file: string): Promise<ImageMetadata> {
+  const encodedLibrary = library.split('/').map(encodeURIComponent).join('/');
+  const encodedFile = file.split('/').map(encodeURIComponent).join('/');
+  const res = await fetch(`/libs/${encodedLibrary}/${encodedFile}/metadata`)
+  if (!res.ok) {
+    throw new Error('Failed to fetch metadata')
+  }
   return res.json()
 }

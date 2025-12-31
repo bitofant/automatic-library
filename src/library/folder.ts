@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import express, { Router, static as static_ } from 'express';
 import { RatingsManager } from './ratings.js';
+import { getImageMetadata } from './metadata.js';
 
 const FILES_UPDATE_INTERVAL = 20000; // 20 seconds
 
@@ -80,6 +81,34 @@ export class LibraryFolder {
 
       this.updateCallbacks.push(callback);
     });
+
+    // Metadata endpoint - must be before static middleware to intercept requests
+    // Match any path ending with /metadata
+    this.router.get(/^\/(.*)\/metadata$/, async (req, res) => {
+      try {
+        const filename = req.params[0];
+        if (!filename) {
+          res.status(400).json({ error: 'Filename is required' });
+          return;
+        }
+
+        const filePath = path.join(this.folderPath, filename);
+
+        // Check if file exists
+        if (!fs.existsSync(filePath)) {
+          res.status(404).json({ error: 'File not found' });
+          return;
+        }
+
+        // Extract metadata
+        const metadata = await getImageMetadata(filePath);
+        res.json(metadata);
+      } catch (error) {
+        console.error('Error fetching metadata:', error);
+        res.status(500).json({ error: 'Failed to extract metadata' });
+      }
+    });
+
     this.router.use(static_(this.folderPath));
 
     if (this.isTodaysFolder()) {

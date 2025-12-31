@@ -22,3 +22,25 @@ export interface LibrariesResponse {
 }
 
 export type Rating = 1 | 2 | 3 | 4 | 5
+
+export interface PngMetadata {
+  prompt?: string
+  negativePrompt?: string
+  steps?: number
+  seed?: number
+  sampler?: string
+  cfgScale?: number
+  model?: string
+  size?: string
+}
+
+export interface ImageMetadata {
+  filename: string
+  fullPath: string
+  fileSize: number
+  createdAt: string
+  width: number
+  height: number
+  isPng: boolean
+  pngMetadata?: PngMetadata
+}

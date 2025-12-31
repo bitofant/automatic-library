@@ -19,6 +19,15 @@
         />
 
         <v-btn
+          icon="mdi-information-outline"
+          variant="text"
+          color="white"
+          class="d-none d-md-inline-flex"
+          @click="handleInfoClick"
+          title="View image information (I)"
+        />
+
+        <v-btn
           icon="mdi-delete"
           variant="text"
           color="white"
@@ -59,6 +68,7 @@
         @close="handleCloseLibrary"
         @enter-zoom="handleEnterZoom"
         @fullscreen="toggleFullscreen"
+        @info="handleInfoClick"
       />
     </v-main>
 
@@ -76,6 +86,12 @@
       :image="currentImage"
       @close="handleZoomOverlayClose"
     />
+
+    <InfoModal
+      :visible="infoModalVisible"
+      :image="currentImage"
+      @close="handleInfoModalClose"
+    />
   </v-app>
 </template>
 
@@ -87,6 +103,7 @@ import SlideshowViewer from './components/SlideshowViewer.vue'
 import WelcomeScreen from './components/WelcomeScreen.vue'
 import InfoBar from './components/InfoBar.vue'
 import ZoomOverlay from './components/ZoomOverlay.vue'
+import InfoModal from './components/InfoModal.vue'
 import { useLibraries } from './composables/useLibraries'
 import { useDevMode } from './composables/useDevMode'
 
@@ -98,6 +115,7 @@ const slideshowRef = ref<InstanceType<typeof SlideshowViewer> | null>(null)
 const initialIndex = ref(0)
 const isFullscreen = ref(false)
 const zoomOverlayVisible = ref(false)
+const infoModalVisible = ref(false)
 
 // Load includeSubfolders from localStorage, default to false
 const includeSubfolders = ref(localStorage.getItem('includeSubfolders') === 'true')
@@ -199,6 +217,16 @@ function handleEnterZoom() {
 
 function handleZoomOverlayClose() {
   zoomOverlayVisible.value = false
+}
+
+function handleInfoClick() {
+  if (currentImage.value) {
+    infoModalVisible.value = true
+  }
+}
+
+function handleInfoModalClose() {
+  infoModalVisible.value = false
 }
 
 // Listen for fullscreen changes to update button state

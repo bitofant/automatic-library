@@ -46,6 +46,7 @@ const emit = defineEmits<{
   close: []
   enterZoom: []
   fullscreen: []
+  info: []
 }>()
 
 const libraryRef = computed(() => props.library)
@@ -110,6 +111,7 @@ useKeyboardNav({
   onDelete: handleDelete,
   onFullscreen: () => emit('fullscreen'),
   onDownload: handleDownload,
+  onInfo: () => emit('info'),
   flickingRef: flickingRef
 })
 
