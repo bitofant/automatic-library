@@ -74,11 +74,11 @@
 
     <InfoBar :info="infoText" />
 
-    <!-- Invisible tap zone in bottom 10% for zoom trigger -->
-    <div
-      v-if="currentLibrary"
-      class="tap-zone"
-      @click="handleTapZoneClick"
+    <TapZone
+      :visible="!!currentLibrary"
+      @previous="slideshowRef?.navigatePrevious()"
+      @next="slideshowRef?.navigateNext()"
+      @enter-zoom="handleEnterZoom"
     />
 
     <ZoomOverlay
@@ -102,6 +102,7 @@ import LibrarySidebar from './components/LibrarySidebar.vue'
 import SlideshowViewer from './components/SlideshowViewer.vue'
 import WelcomeScreen from './components/WelcomeScreen.vue'
 import InfoBar from './components/InfoBar.vue'
+import TapZone from './components/TapZone.vue'
 import ZoomOverlay from './components/ZoomOverlay.vue'
 import InfoModal from './components/InfoModal.vue'
 import { useLibraries } from './composables/useLibraries'
@@ -184,28 +185,6 @@ async function toggleFullscreen() {
     }
   } catch (error) {
     console.error('Error toggling fullscreen:', error)
-  }
-}
-
-function handleTapZoneClick(event: MouseEvent) {
-  const clickX = event.clientX
-  const screenWidth = window.innerWidth
-  const leftThreshold = screenWidth * 0.2  // Left 20%
-  const rightThreshold = screenWidth * 0.8  // Right 80%
-
-  if (clickX < leftThreshold) {
-    // Left 20% - previous image
-    if (slideshowRef.value?.navigatePrevious) {
-      slideshowRef.value.navigatePrevious()
-    }
-  } else if (clickX > rightThreshold) {
-    // Right 20% - next image
-    if (slideshowRef.value?.navigateNext) {
-      slideshowRef.value.navigateNext()
-    }
-  } else {
-    // Middle 60% - enter zoom mode
-    handleEnterZoom()
   }
 }
 
@@ -339,18 +318,5 @@ function handleCloseLibrary() {
 
 :deep(.v-btn .mdi-star-outline) {
   transform: scale(1);
-}
-
-/* Invisible tap zone in bottom 10% for zoom mode trigger */
-.tap-zone {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 10vh;
-  z-index: 60;  /* Above InfoBar (50) */
-  background: transparent;
-  pointer-events: auto;
-  cursor: pointer;
 }
 </style>
