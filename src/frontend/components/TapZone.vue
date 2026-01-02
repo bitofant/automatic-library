@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 defineProps<{
   visible: boolean
@@ -27,7 +27,35 @@ const emit = defineEmits<{
   next: []
 }>()
 
-const overlayVisible = ref(true)
+const OVERLAY_HIDE_KEY = 'tapzone-overlay-hidden-timestamp'
+const HIDE_DURATION_MS = 5 * 60 * 1000  // 5 minutes
+
+// Initialize overlay visibility based on localStorage timestamp
+function initializeOverlayVisibility(): boolean {
+  const hiddenTimestamp = localStorage.getItem(OVERLAY_HIDE_KEY)
+
+  if (!hiddenTimestamp) {
+    // No timestamp stored, show overlay
+    return true
+  }
+
+  const timestamp = parseInt(hiddenTimestamp, 10)
+  const now = Date.now()
+  const timeSinceHidden = now - timestamp
+
+  // Show overlay if more than 5 minutes have passed
+  return timeSinceHidden > HIDE_DURATION_MS
+}
+
+const overlayVisible = ref(initializeOverlayVisibility())
+
+// Persist timestamp when overlay is hidden
+watch(overlayVisible, (newValue) => {
+  if (!newValue) {
+    // Overlay was hidden, save current timestamp
+    localStorage.setItem(OVERLAY_HIDE_KEY, Date.now().toString())
+  }
+})
 
 function handleClick(event: MouseEvent) {
   const clickX = event.clientX
