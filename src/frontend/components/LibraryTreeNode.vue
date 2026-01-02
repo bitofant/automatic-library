@@ -56,3 +56,10 @@ function handleSelect() {
   }
 }
 </script>
+
+<style scoped>
+/* Reduce spacing between icon and text */
+:deep(.v-list-item) {
+  --v-list-prepend-gap: 8px;
+}
+</style>

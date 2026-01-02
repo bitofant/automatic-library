@@ -182,4 +182,9 @@ function handleSidebarFilterClick(filterValue: 1|2|3|4|5) {
   gap: 4px;
   justify-content: center;
 }
+
+/* Reduce spacing between icon and text */
+:deep(.v-list-item) {
+  --v-list-prepend-gap: 8px;
+}
 </style>
