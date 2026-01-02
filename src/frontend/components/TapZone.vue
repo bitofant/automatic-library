@@ -1,4 +1,13 @@
 <template>
+  <!-- Black overlay for hiding UI -->
+  <Transition name="overlay-fade">
+    <div
+      v-if="overlayVisible"
+      class="ui-overlay"
+    />
+  </Transition>
+
+  <!-- Tap zone in bottom 10% -->
   <div
     v-if="visible"
     class="tap-zone"
@@ -7,6 +16,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+
 defineProps<{
   visible: boolean
 }>()
@@ -14,8 +25,9 @@ defineProps<{
 const emit = defineEmits<{
   previous: []
   next: []
-  enterZoom: []
 }>()
+
+const overlayVisible = ref(true)
 
 function handleClick(event: MouseEvent) {
   const clickX = event.clientX
@@ -30,14 +42,37 @@ function handleClick(event: MouseEvent) {
     // Right 20% - next image
     emit('next')
   } else {
-    // Middle 60% - enter zoom mode
-    emit('enterZoom')
+    // Middle 60% - toggle UI overlay
+    overlayVisible.value = !overlayVisible.value
   }
 }
 </script>
 
 <style scoped>
-/* Invisible tap zone in bottom 10% for zoom mode trigger */
+/* Black overlay for hiding UI - covers entire screen */
+.ui-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1007;  /* Above app bar (1006), below ZoomOverlay (2000) */
+  background: #000;
+  pointer-events: none;  /* Overlay is passive, only tap zone toggles it */
+}
+
+/* Fade transition (200ms to match ZoomOverlay) */
+.overlay-fade-enter-active,
+.overlay-fade-leave-active {
+  transition: opacity 0.7s ease;
+}
+
+.overlay-fade-enter-from,
+.overlay-fade-leave-to {
+  opacity: 0;
+}
+
+/* Invisible tap zone in bottom 10% for navigation and overlay toggle */
 .tap-zone {
   position: fixed;
   bottom: 0;

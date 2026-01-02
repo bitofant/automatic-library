@@ -78,7 +78,6 @@
       :visible="!!currentLibrary"
       @previous="slideshowRef?.navigatePrevious()"
       @next="slideshowRef?.navigateNext()"
-      @enter-zoom="handleEnterZoom"
     />
 
     <ZoomOverlay
