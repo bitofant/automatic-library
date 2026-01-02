@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 
 defineProps<{
   visible: boolean
@@ -55,6 +55,19 @@ watch(overlayVisible, (newValue) => {
     // Overlay was hidden, save current timestamp
     localStorage.setItem(OVERLAY_HIDE_KEY, Date.now().toString())
   }
+})
+
+// Show overlay when user returns to tab/app
+function handleVisibilityChange() {
+  overlayVisible.value = true;
+}
+
+onMounted(() => {
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 
 function handleClick(event: MouseEvent) {
