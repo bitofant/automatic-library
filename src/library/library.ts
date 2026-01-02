@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { LibraryFolder } from './folder.js';
 import { RatingsManager } from './ratings.js';
+import { CustomizationsManager } from './customizations.js';
 import { Router } from 'express';
 
 interface FolderNode {
@@ -17,12 +18,14 @@ export class Library {
   private folders: Map<string, LibraryFolder> = new Map();
   private router: Router;
   private ratingsManager: RatingsManager;
+  private customizationsManager: CustomizationsManager;
   private folderTree: FolderNode[] = [];
   private rootHasImages: boolean = false;
 
   constructor(basePath: string) {
     this.basePath = basePath;
     this.ratingsManager = new RatingsManager(process.cwd() + '/ratings');
+    this.customizationsManager = new CustomizationsManager(process.cwd() + '/ratings');
     this.router = Router();
     this.initializeFolders();
   }
@@ -56,7 +59,8 @@ export class Library {
           children: [],
           hasImages: true
         } : null,
-        folders: this.folderTree
+        folders: this.folderTree,
+        customizations: this.customizationsManager.loadCustomizations()
       });
     });
 
@@ -71,7 +75,8 @@ export class Library {
             children: [],
             hasImages: true
           } : null,
-          folders: this.folderTree
+          folders: this.folderTree,
+          customizations: this.customizationsManager.loadCustomizations()
         });
       } catch (error) {
         console.error('Failed to reload libraries:', error);
@@ -121,6 +126,28 @@ export class Library {
         console.error('Failed to delete file:', error);
         res.status(500).json({ error: 'Failed to delete file' });
       }
+    });
+
+    // Customizations endpoints
+    this.router.get('/customizations', (req, res) => {
+      const customizations = this.customizationsManager.loadCustomizations();
+      res.json(customizations);
+    });
+
+    this.router.post('/customizations', (req, res) => {
+      if (!req.body || !req.body.folderPath) {
+        return res.status(400).json({ error: 'Invalid payload: folderPath required' });
+      }
+
+      const { folderPath, displayName, icon } = req.body;
+      this.customizationsManager.setCustomization(folderPath, { displayName, icon });
+      res.sendStatus(200);
+    });
+
+    this.router.delete('/customizations/:folderPath', (req, res) => {
+      const folderPath = decodeURIComponent(req.params.folderPath);
+      this.customizationsManager.removeCustomization(folderPath);
+      res.sendStatus(200);
     });
 
     // Register all nested folders with their full relative paths

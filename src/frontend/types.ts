@@ -16,9 +16,19 @@ export interface LibraryNode {
   hasImages: boolean     // Contains images directly
 }
 
+export interface FolderCustomization {
+  displayName?: string
+  icon?: string
+}
+
+export interface CustomizationsData {
+  [folderPath: string]: FolderCustomization
+}
+
 export interface LibrariesResponse {
   root: LibraryNode | null
   folders: LibraryNode[]
+  customizations?: CustomizationsData
 }
 
 export type Rating = 1 | 2 | 3 | 4 | 5

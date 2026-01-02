@@ -47,6 +47,7 @@
 
     <LibrarySidebar
       :librariesData="librariesData"
+      :customizations="customizations"
       :expanded="sidebarExpanded"
       :includeSubfolders="includeSubfolders"
       :isRefreshing="isRefreshing"
@@ -56,6 +57,7 @@
       @update:include-subfolders="handleUpdateIncludeSubfolders"
       @refresh="handleRefresh"
       @filter-change="handleSidebarFilterChange"
+      @edit-folder="handleEditFolder"
     />
 
     <v-main>
@@ -91,6 +93,17 @@
       :image="currentImage"
       @close="handleInfoModalClose"
     />
+
+    <EditFolderDialog
+      :visible="editDialogVisible"
+      :folder-path="editingFolderPath"
+      :default-name="editingDefaultName"
+      :default-icon="editingDefaultIcon"
+      :current-customization="editingCustomization"
+      @close="handleEditDialogClose"
+      @save="handleEditDialogSave"
+      @reset="handleEditDialogReset"
+    />
   </v-app>
 </template>
 
@@ -104,10 +117,14 @@ import InfoBar from './components/InfoBar.vue'
 import TapZone from './components/TapZone.vue'
 import ZoomOverlay from './components/ZoomOverlay.vue'
 import InfoModal from './components/InfoModal.vue'
+import EditFolderDialog from './components/EditFolderDialog.vue'
 import { useLibraries } from './composables/useLibraries'
 import { useDevMode } from './composables/useDevMode'
+import { useCustomizations } from './composables/useCustomizations'
+import type { FolderCustomization, LibraryNode } from './types'
 
 const { librariesData, currentLibrary, activeFilter, isRefreshing, fetchLibraries, loadLibrary, closeLibrary, setFilter, refreshLibraries } = useLibraries()
+const { customizations, loadCustomizations, getCustomization, updateCustomization, deleteCustomization } = useCustomizations()
 const route = useRoute()
 const { initDevMode } = useDevMode()
 const sidebarExpanded = ref(false)
@@ -116,6 +133,11 @@ const initialIndex = ref(0)
 const isFullscreen = ref(false)
 const zoomOverlayVisible = ref(false)
 const infoModalVisible = ref(false)
+const editDialogVisible = ref(false)
+const editingFolderPath = ref('')
+const editingDefaultName = ref('')
+const editingDefaultIcon = ref('')
+const editingCustomization = ref<FolderCustomization | undefined>()
 
 // Load includeSubfolders from localStorage, default to false
 const includeSubfolders = ref(localStorage.getItem('includeSubfolders') === 'true')
@@ -229,6 +251,9 @@ async function handleSidebarFilterChange(filterValue: 1|2|3|4|5|null) {
 
 onMounted(async () => {
   await fetchLibraries()
+  if (librariesData.value.customizations) {
+    loadCustomizations(librariesData.value.customizations)
+  }
   initDevMode()
 
   // Set up fullscreen change listener
@@ -301,6 +326,55 @@ async function handleRefresh() {
 
 function handleCloseLibrary() {
   closeLibrary()
+}
+
+// Helper to find node by path
+function findNodeByPath(path: string, nodes: LibraryNode[]): LibraryNode | null {
+  for (const node of nodes) {
+    if (node.path === path) return node
+    const found = findNodeByPath(path, node.children)
+    if (found) return found
+  }
+  return null
+}
+
+function handleEditFolder(folderPath: string) {
+  editingFolderPath.value = folderPath
+
+  // Find the node to get default values
+  if (folderPath === '__root__') {
+    editingDefaultName.value = librariesData.value.root?.name || 'Root'
+    editingDefaultIcon.value = 'mdi-folder'
+  } else {
+    const node = findNodeByPath(folderPath, librariesData.value.folders)
+    if (node) {
+      editingDefaultName.value = node.name
+      if (node.children.length === 0) {
+        // Leaf node
+        editingDefaultIcon.value = node.hasImages ? 'mdi-folder-image' : 'mdi-folder'
+      } else {
+        // Branch node
+        editingDefaultIcon.value = node.hasImages ? 'mdi-folder-image' : 'mdi-folder-outline'
+      }
+    }
+  }
+
+  editingCustomization.value = getCustomization(folderPath)
+  editDialogVisible.value = true
+}
+
+function handleEditDialogClose() {
+  editDialogVisible.value = false
+}
+
+async function handleEditDialogSave(customization: FolderCustomization) {
+  await updateCustomization(editingFolderPath.value, customization)
+  editDialogVisible.value = false
+}
+
+async function handleEditDialogReset() {
+  await deleteCustomization(editingFolderPath.value)
+  editDialogVisible.value = false
 }
 </script>
 

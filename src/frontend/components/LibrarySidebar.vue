@@ -18,10 +18,22 @@
       <template v-if="librariesData.root">
         <v-list-subheader>Root</v-list-subheader>
         <v-list-item
-          prepend-icon="mdi-folder"
-          :title="librariesData.root.name"
+          :prepend-icon="rootIcon"
+          :title="rootDisplayName"
           @click="$emit('select-library', librariesData.root.path)"
-        />
+          class="folder-node"
+        >
+          <template #append>
+            <v-btn
+              icon="mdi-pencil"
+              size="small"
+              variant="text"
+              class="edit-button"
+              @click.stop="$emit('edit-folder', '__root__')"
+              title="Edit folder name/icon"
+            />
+          </template>
+        </v-list-item>
         <v-divider />
       </template>
 
@@ -49,7 +61,9 @@
         v-for="node in librariesData.folders"
         :key="node.path"
         :node="node"
+        :customizations="customizations"
         @select="$emit('select-library', $event)"
+        @edit="$emit('edit-folder', $event)"
       />
     </v-list>
 
@@ -94,12 +108,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { LibrariesResponse, LibraryData } from '../types'
+import { ref, computed } from 'vue'
+import type { LibrariesResponse, LibraryData, CustomizationsData } from '../types'
 import LibraryTreeNode from './LibraryTreeNode.vue'
 
-defineProps<{
+const props = defineProps<{
   librariesData: LibrariesResponse
+  customizations: CustomizationsData
   expanded: boolean
   includeSubfolders: boolean
   isRefreshing: boolean
@@ -112,7 +127,17 @@ const emit = defineEmits<{
   'update:include-subfolders': [value: boolean]
   refresh: []
   'filter-change': [filter: 1|2|3|4|5|null]
+  'edit-folder': [path: string]
 }>()
+
+const rootIcon = computed(() => {
+  return props.customizations['__root__']?.icon || 'mdi-folder'
+})
+
+const rootDisplayName = computed(() => {
+  const defaultName = props.librariesData.root?.name || 'Root'
+  return props.customizations['__root__']?.displayName || defaultName
+})
 
 // Independent sidebar filter state
 const activeSidebarFilter = ref<1|2|3|4|5|null>(null)
@@ -186,5 +211,26 @@ function handleSidebarFilterClick(filterValue: 1|2|3|4|5) {
 /* Reduce spacing between icon and text */
 :deep(.v-list-item) {
   --v-list-prepend-gap: 8px;
+}
+
+.folder-node {
+  position: relative;
+}
+
+/* Hide edit button by default, show on hover (desktop only) */
+.edit-button {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.folder-node:hover .edit-button {
+  opacity: 1;
+}
+
+/* On touch devices, always show edit button */
+@media (hover: none) {
+  .edit-button {
+    opacity: 1;
+  }
 }
 </style>

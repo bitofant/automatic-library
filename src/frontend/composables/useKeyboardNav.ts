@@ -15,6 +15,16 @@ export interface KeyboardNavHandlers {
 
 export function useKeyboardNav(handlers: KeyboardNavHandlers) {
   function handleKeydown(e: KeyboardEvent) {
+    // Ignore keyboard shortcuts when typing in input fields
+    const target = e.target as HTMLElement
+    if (
+      target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.isContentEditable
+    ) {
+      return
+    }
+
     switch (e.key) {
       case 'ArrowRight':
       case 'x':

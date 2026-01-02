@@ -1,4 +1,4 @@
-import type { LibraryData, Rating, LibrariesResponse, ImageMetadata } from '../types'
+import type { LibraryData, Rating, LibrariesResponse, ImageMetadata, CustomizationsData, FolderCustomization } from '../types'
 
 export async function getLibraries(): Promise<LibrariesResponse> {
   const res = await fetch('/libs')
@@ -84,4 +84,27 @@ export async function getImageMetadata(library: string, file: string): Promise<I
     throw new Error('Failed to fetch metadata')
   }
   return res.json()
+}
+
+export async function getCustomizations(): Promise<CustomizationsData> {
+  const res = await fetch('/libs/customizations')
+  return res.json()
+}
+
+export async function setCustomization(
+  folderPath: string,
+  customization: FolderCustomization
+): Promise<void> {
+  await fetch('/libs/customizations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ folderPath, ...customization })
+  })
+}
+
+export async function removeCustomization(folderPath: string): Promise<void> {
+  const encodedPath = folderPath.split('/').map(encodeURIComponent).join('/')
+  await fetch(`/libs/customizations/${encodedPath}`, {
+    method: 'DELETE'
+  })
 }
