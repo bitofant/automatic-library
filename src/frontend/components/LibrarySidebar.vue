@@ -227,10 +227,10 @@ function handleSidebarFilterClick(filterValue: 1|2|3|4|5) {
   opacity: 1;
 }
 
-/* On touch devices, always show edit button */
+/* On touch devices, hide edit button completely */
 @media (hover: none) {
   .edit-button {
-    opacity: 1;
+    display: none;
   }
 }
 </style>

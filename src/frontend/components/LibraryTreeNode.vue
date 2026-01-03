@@ -123,10 +123,10 @@ function handleSelect() {
   opacity: 1;
 }
 
-/* On touch devices, always show edit button */
+/* On touch devices, hide edit button completely */
 @media (hover: none) {
   .edit-button {
-    opacity: 1;
+    display: none;
   }
 }
 </style>

@@ -9,7 +9,7 @@
 
   <!-- Tap zone in bottom 10% -->
   <div
-    v-if="visible"
+    v-if="visible || overlayVisible"
     class="tap-zone"
     @click="handleClick"
   />
