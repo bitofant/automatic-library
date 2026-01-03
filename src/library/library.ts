@@ -209,6 +209,10 @@ export class Library {
       });
     }
 
+    // Sort by folder name (actual name, not display name) in descending order
+    // This handles date-based folder names like "2025-11-24" to show most recent first
+    nodes.sort((a, b) => b.name.localeCompare(a.name));
+
     return nodes;
   }
 
