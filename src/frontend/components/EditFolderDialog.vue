@@ -45,6 +45,10 @@
           <div class="mt-6">
             <div class="text-caption mb-2">
               <span v-if="isLoadingIcons">Loading icons...</span>
+              <span v-else-if="hasMoreIcons">
+                Showing {{ displayedIcons.length }} of {{ filteredIcons.length }} icon{{ filteredIcons.length === 1 ? '' : 's' }}
+                {{ localIcon ? '(type to filter)' : '(type to search)' }}
+              </span>
               <span v-else>
                 {{ filteredIcons.length }} icon{{ filteredIcons.length === 1 ? '' : 's' }}
                 {{ localIcon ? '(filtered)' : '' }}
@@ -52,7 +56,7 @@
             </div>
             <div class="icon-presets-scrollable">
               <v-btn
-                v-for="icon in filteredIcons"
+                v-for="icon in displayedIcons"
                 :key="icon"
                 icon
                 size="small"
@@ -165,6 +169,11 @@ const filteredIcons = computed(() => {
   const searchTerm = localIcon.value.toLowerCase()
   return allIcons.value.filter(icon => icon.toLowerCase().includes(searchTerm))
 })
+
+// Limit displayed icons to 20
+const MAX_DISPLAYED_ICONS = 20
+const displayedIcons = computed(() => filteredIcons.value.slice(0, MAX_DISPLAYED_ICONS))
+const hasMoreIcons = computed(() => filteredIcons.value.length > MAX_DISPLAYED_ICONS)
 
 // Load current customization when dialog opens
 watch(() => props.visible, async (visible) => {
